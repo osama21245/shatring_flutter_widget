@@ -40,6 +40,10 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     // Initialize the list items once when the widget is created
+  }
+
+  @override
+  Widget build(BuildContext context) {
     listItems = destinationsList
         .map((destination) => DestinationCard(
               onScatterComplete: () {
@@ -49,10 +53,6 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ))
         .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
           child: ListView(

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -18,6 +19,8 @@ class ShatteringWidget extends StatefulWidget {
 class _ShatteringWidgetState extends State<ShatteringWidget>
     with SingleTickerProviderStateMixin {
   AnimationController? controller;
+  Random r = Random();
+
   List<Shards> shards = [];
   GlobalKey? key;
   ui.Image? image;
@@ -56,6 +59,39 @@ class _ShatteringWidgetState extends State<ShatteringWidget>
     boundary.toImage().then((value) {
       setState(() {
         image = value;
+        List<Tri> triangles = image!.width > image!.height
+            ? [
+                Tri(const Offset(0, 0), const Offset(.3, 0),
+                    const Offset(0, 1.0)),
+                Tri(const Offset(.3, 0), const Offset(1.0, 0),
+                    const Offset(1.0, 1.0)),
+                Tri(const Offset(0, 1.0), const Offset(.3, 0),
+                    const Offset(1.0, 1.0)),
+              ]
+            : [
+                Tri(const Offset(0, 0), const Offset(1.0, 0),
+                    const Offset(1.0, .3)),
+                Tri(const Offset(0, 0), const Offset(1.0, .3),
+                    const Offset(0, 1.0)),
+                Tri(const Offset(0, 1.0), const Offset(1.0, .3),
+                    const Offset(1.0, 1.0)),
+              ];
+        shards = triangles
+            .map((e) => r.nextBool() ? e.split() : [e])
+            .expand((e) => e)
+            .map((e) => r.nextBool() ? e.split() : [e])
+            .expand((e) => e)
+            .map((e) => r.nextBool() ? e.split() : [e])
+            .expand((e) => e)
+            .map((e) => r.nextBool() ? e.split() : [e])
+            .expand((e) => e)
+            .map((e) => r.nextBool() ? e.split() : [e])
+            .expand((e) => e)
+            .map((e) => r.nextBool() ? e.split() : [e])
+            .expand((e) => e)
+            .map((e) => Shards(e, -.3 + r.nextDouble() * .6,
+                ((e.center - const Offset(.5, .5)) * r.nextDouble() * 600)))
+            .toList();
         controller!.forward();
       });
     });
@@ -69,12 +105,22 @@ class ShardPainter extends CustomPainter {
   ShardPainter(this.image, this.shards, this.progress);
   @override
   void paint(Canvas canvas, Size size) {
-    Paint imageShader = Paint()
+    Paint imagePainter = Paint()
       ..shader = ImageShader(
           image, TileMode.clamp, TileMode.clamp, Matrix4.identity().storage);
-    Rect rect =
-        Rect.fromLTWH(50 * progress, 50 * progress, size.width, size.height);
-    canvas.drawRect(rect, imageShader);
+
+    for (Shards shard in shards) {
+      Offset center = shard.getCenter(size);
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(shard.rotation * progress);
+      canvas.translate(-center.dx + shard.velocity.dx * progress,
+          -center.dy + shard.velocity.dy * progress);
+
+      canvas.drawPath(shard.toPath(size), imagePainter);
+
+      canvas.restore();
+    }
   }
 
   @override
